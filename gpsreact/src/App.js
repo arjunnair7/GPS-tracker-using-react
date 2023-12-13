@@ -1,10 +1,12 @@
 /* global google */
-import { GoogleMap, useLoadScript, DirectionsRenderer } from "@react-google-maps/api";
-import { useState } from "react";
+import { GoogleMap, useLoadScript, DirectionsRenderer, Marker } from "@react-google-maps/api";
+import { useState, useEffect } from "react";
 import "./App.css";
+import bike from "./bike_2.svg"
 
 const App = () => {
   const [directions, setDirections] = useState(null);
+  const [movingMarkerPosition, setMovingMarkerPosition] = useState(null);
   let directionsService;
 
   const { isLoaded } = useLoadScript({
@@ -37,12 +39,31 @@ const App = () => {
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
           setDirections(result);
+          animateMovingMarker(result.routes[0].overview_path);
         } else {
           console.error(`Error fetching directions: ${status}`);
         }
       }
     );
   };
+
+  const animateMovingMarker = (path) => {
+    let index = 0;
+    const intervalId = setInterval(() => {
+      if (index < path.length) {
+        setMovingMarkerPosition({ lat: path[index].lat(), lng: path[index].lng() });
+        index++;
+      } else {
+        clearInterval(intervalId);
+      }
+    }, 250); // Update every second, adjust timing as needed
+  };
+
+  useEffect(() => {
+    if (directions) {
+      animateMovingMarker(directions.routes[0].overview_path);
+    }
+  }, [directions]);
 
   return (
     <div className="App">
@@ -52,10 +73,18 @@ const App = () => {
         <GoogleMap
           mapContainerClassName="map-container"
           onLoad={onMapLoad}
-          onClick={() => setDirections(null)}
+          onClick={() => {
+            setDirections(null);
+            setMovingMarkerPosition(null);
+          }}
         >
           {directions !== null && (
-            <DirectionsRenderer directions={directions} />
+            <>
+              <DirectionsRenderer directions={directions} />
+              {movingMarkerPosition && (
+                <Marker position={movingMarkerPosition} icon={bike} />
+              )}
+            </>
           )}
         </GoogleMap>
       )}
