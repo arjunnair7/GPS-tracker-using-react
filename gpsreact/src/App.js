@@ -3,8 +3,9 @@ import { GoogleMap, useLoadScript, DirectionsRenderer, Marker } from "@react-goo
 import { useState, useEffect } from "react";
 import "./App.css";
 import bike from "./bike_2.svg"
-
+import InfoBox from "./InfoBox";
 const App = () => {
+  const [showInfoBox, setShowInfoBox] = useState(false);
   const [directions, setDirections] = useState(null);
   const [movingMarkerPosition, setMovingMarkerPosition] = useState(null);
   let directionsService;
@@ -13,15 +14,15 @@ const App = () => {
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_API_KEY,
   });
 
-  const [mapRef, setMapRef] = useState();
+  
 
   const markers = [
     { address: "Start", lat: 8.5366, lng: 76.8830 },
-    { address: "Finish", lat: 8.5154, lng: 76.8977 },
+    { address: "Finish", lat: 30.3753, lng: 76.2673 },
   ];
 
   const onMapLoad = (map) => {
-    setMapRef(map);
+    
     const bounds = new google.maps.LatLngBounds();
     markers?.forEach(({ lat, lng }) => bounds.extend({ lat, lng }));
     map.fitBounds(bounds);
@@ -39,7 +40,7 @@ const App = () => {
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
           setDirections(result);
-          animateMovingMarker(result.routes[0].overview_path);
+          // animateMovingMarker(result.routes[0].overview_path);
         } else {
           console.error(`Error fetching directions: ${status}`);
         }
@@ -56,17 +57,21 @@ const App = () => {
       } else {
         clearInterval(intervalId);
       }
-    }, 250); // Update every second, adjust timing as needed
+    }, 75); // Update every second, adjust timing as needed
   };
 
   useEffect(() => {
+    
     if (directions) {
+      setShowInfoBox(true);
       animateMovingMarker(directions.routes[0].overview_path);
     }
   }, [directions]);
 
   return (
     <div className="App">
+      {showInfoBox && <InfoBox object={directions.routes[0].legs[0]}/>} 
+      
       {!isLoaded ? (
         <h1>Loading...</h1>
       ) : (
