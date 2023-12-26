@@ -45,6 +45,7 @@ const App = () => {
       },
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
+          
           setDirections(result);
           // animateMovingMarker(result.routes[0].overview_path);
         } else {
@@ -67,12 +68,24 @@ const App = () => {
   };
 
   useEffect(() => {
-    
     if (directions) {
+      console.log(directions);
       setShowInfoBox(true);
       animateMovingMarker(directions.routes[0].overview_path);
+  
+      fetch('http://localhost:3001', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(directions), // Convert directions to a JSON string
+      })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error creating documents:', error));
     }
   }, [directions]);
+  
 
   return (
     <div className="App">
