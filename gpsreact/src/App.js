@@ -1,12 +1,14 @@
 /* global google */
 import { GoogleMap, useLoadScript, DirectionsRenderer, Marker } from "@react-google-maps/api";
-import { useState, useEffect } from "react";
+import { useState, useEffect,React,Fragment } from "react";
 import "./App.css";
 import InfoBox from "./InfoBox";
-const App = () => {
-  const [showInfoBox, setShowInfoBox] = useState(false);
-  const [directions, setDirections] = useState(null);
-  const [movingMarkerPosition, setMovingMarkerPosition] = useState(null);
+
+const App = ({ markers }) => {
+  const [showInfoBox, setShowInfoBox] = useState(true);
+  const [directions, setDirections] = useState([]);
+  const [movingMarkerPositions, setMovingMarkerPositions] = useState([]);
+  const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
   let directionsService;
 
   const { isLoaded } = useLoadScript({
@@ -22,32 +24,40 @@ const App = () => {
     scale: 1,
   };
 
-  const markers = [
-    { address: "Start", lat: 8.5366, lng: 76.8830 },
-    { address: "Finish", lat: 30.3753, lng: 76.2673 },
-  ];
+  let bounds;
 
   const onMapLoad = (map) => {
-    
-    const bounds = new google.maps.LatLngBounds();
-    markers?.forEach(({ lat, lng }) => bounds.extend({ lat, lng }));
+    bounds = new google.maps.LatLngBounds();
+
+    markers.forEach((route) => {
+      const startLatLng = new google.maps.LatLng(route.start.lat, route.start.lng);
+      const finishLatLng = new google.maps.LatLng(route.finish.lat, route.finish.lng);
+
+      bounds.extend(startLatLng);
+      bounds.extend(finishLatLng);
+    });
+
+    console.log("Bounds:", bounds.toJSON());
+
     map.fitBounds(bounds);
     directionsService = new google.maps.DirectionsService();
-    changeDirection(markers[0], markers[1]);
+
+    markers.forEach((route, index) => {
+      changeDirection(route.start, route.finish, index);
+    });
   };
 
-  const changeDirection = (origin, destination) => {
+  const changeDirection = (origin, destination, index) => {
     directionsService.route(
       {
         origin: origin,
         destination: destination,
-        travelMode: google.maps.TravelMode.DRIVING
+        travelMode: google.maps.TravelMode.DRIVING,
       },
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
-          
-          setDirections(result);
-          // animateMovingMarker(result.routes[0].overview_path);
+          setDirections((prevDirections) => [...prevDirections, result]);
+          animateMovingMarker(result.routes[0].overview_path, index);
         } else {
           console.error(`Error fetching directions: ${status}`);
         }
@@ -55,61 +65,73 @@ const App = () => {
     );
   };
 
-  const animateMovingMarker = (path) => {
-    let index = 0;
-    const intervalId = setInterval(() => {
-      if (index < path.length) {
-        setMovingMarkerPosition({ lat: path[index].lat(), lng: path[index].lng() });
-        index++;
+  const animateMovingMarker = (path, index) => {
+    let positions = [];
+    let intervalId;
+
+    positions.push({ lat: path[0].lat(), lng: path[0].lng() });
+
+    intervalId = setInterval(() => {
+      const lastIndex = positions.length - 1;
+
+      if (lastIndex < path.length - 1) {
+        positions.push({ lat: path[lastIndex + 1].lat(), lng: path[lastIndex + 1].lng() });
+        setMovingMarkerPositions((prevPositions) => {
+          const newPositions = [...prevPositions];
+          newPositions[index] = positions;
+          return newPositions;
+        });
       } else {
         clearInterval(intervalId);
       }
-    }, 75); // Update every second, adjust timing as needed
+    }, 1); // Update every second, adjust timing as needed
   };
-
   useEffect(() => {
-    if (directions) {
-      console.log(directions);
-      setShowInfoBox(true);
-      animateMovingMarker(directions.routes[0].overview_path);
-  
-      fetch('http://localhost:3001', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(directions), // Convert directions to a JSON string
-      })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(error => console.error('Error creating documents:', error));
-    }
-  }, [directions]);
-  
+    const intervalId = setInterval(() => {
+      setCurrentPositionIndex((prevIndex) => prevIndex + 1);
+    }, 50);
+
+    return () => clearInterval(intervalId); // Cleanup on component unmount or state change
+  });
+
+  // useEffect(() => {
+  //   setShowInfoBox(true);
+
+    // Additional logic can go here
+    // fetch('http://localhost:3001', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(directions), // Convert directions to a JSON string
+    // })
+    //   .then(response => response.json())
+    //   .then(data => console.log(data))
+    //   .catch(error => console.error('Error creating documents:', error));
+  // }, [directions]);
 
   return (
     <div className="App">
-      {showInfoBox && <InfoBox object={directions.routes[0].legs[0]}/>} 
-      
+      {directions.length > 0 && showInfoBox && (
+        <InfoBox object={directions[directions.length - 1].routes[0].legs[0]} />
+      )}
+
       {!isLoaded ? (
         <h1>Loading...</h1>
       ) : (
-        <GoogleMap
-          mapContainerClassName="map-container"
-          onLoad={onMapLoad}
-          onClick={() => {
-            setDirections(null);
-            setMovingMarkerPosition(null);
-          }}
-        >
-          {directions !== null && (
-            <>
-              <DirectionsRenderer directions={directions} />
-              {movingMarkerPosition && (
-                <Marker position={movingMarkerPosition} icon={customMarker} />
+        <GoogleMap mapContainerClassName="map-container" onLoad={onMapLoad} zoom={13}>
+          {directions.map((direction, index) => (
+            <Fragment key={index}>
+              <DirectionsRenderer directions={direction} />
+              {movingMarkerPositions[index] && (
+                <Marker
+                  position={movingMarkerPositions[index][currentPositionIndex]} // Initial position
+                  icon={customMarker}
+                  animation={google.maps.Animation.BOUNCE} // Optional animation
+                />
               )}
-            </>
-          )}
+            </Fragment>
+          ))}
         </GoogleMap>
       )}
     </div>
