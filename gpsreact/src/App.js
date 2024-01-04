@@ -27,14 +27,15 @@ const App = ({ markers }) => {
   let bounds;
 
   const onMapLoad = (map) => {
+    console.log(markers);
     bounds = new google.maps.LatLngBounds();
 
     markers.forEach((route) => {
       const startLatLng = new google.maps.LatLng(route.start.lat, route.start.lng);
-      const finishLatLng = new google.maps.LatLng(route.finish.lat, route.finish.lng);
+      // const finishLatLng = new google.maps.LatLng(route.finish.lat, route.finish.lng);
 
       bounds.extend(startLatLng);
-      bounds.extend(finishLatLng);
+      
     });
 
     console.log("Bounds:", bounds.toJSON());
@@ -96,18 +97,18 @@ const App = ({ markers }) => {
 
   // useEffect(() => {
   //   setShowInfoBox(true);
-
-    // Additional logic can go here
-    // fetch('http://localhost:3001', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(directions), // Convert directions to a JSON string
-    // })
-    //   .then(response => response.json())
-    //   .then(data => console.log(data))
-    //   .catch(error => console.error('Error creating documents:', error));
+  //   console.log(directions);
+  //   // Additional logic can go here
+  //   fetch('http://localhost:3001', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify(directions), // Convert directions to a JSON string
+  //   })
+  //     .then(response => response.json())
+  //     .then(data => console.log(data))
+  //     .catch(error => console.error('Error creating documents:', error));
   // }, [directions]);
 
   return (
@@ -119,7 +120,7 @@ const App = ({ markers }) => {
       {!isLoaded ? (
         <h1>Loading...</h1>
       ) : (
-        <GoogleMap mapContainerClassName="map-container" onLoad={onMapLoad} zoom={13}>
+        <GoogleMap mapContainerClassName="map-container" onLoad={onMapLoad} zoom={10}>
           {directions.map((direction, index) => (
             <Fragment key={index}>
               <DirectionsRenderer directions={direction} />
@@ -127,7 +128,7 @@ const App = ({ markers }) => {
                 <Marker
                   position={movingMarkerPositions[index][currentPositionIndex]} // Initial position
                   icon={customMarker}
-                  animation={google.maps.Animation.BOUNCE} // Optional animation
+                  // animation={google.maps.Animation.BOUNCE} 
                 />
               )}
             </Fragment>

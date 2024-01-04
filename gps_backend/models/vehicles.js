@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const detailSchema = new Schema({
-    title: {
-        type: Number,
-        required: true
-    },
-    start_location: {
+    start: {
+        address: {
+            type: String,
+            required: true
+        },
         lat: {
             type: Number,
             required: true
@@ -16,7 +16,11 @@ const detailSchema = new Schema({
             required: true
         }
     },
-    end_location: {
+    finish: {
+        address: {
+            type: String,
+            required: true
+        },
         lat: {
             type: Number,
             required: true
@@ -25,27 +29,8 @@ const detailSchema = new Schema({
             type: Number,
             required: true
         }
-    },
-    values: {
-        type: [
-            {
-            lat: {
-                type: Number,
-                required: true
-            },
-            lng: {
-                type: Number,
-                required: true
-            }
-        }
-        ],
-        required: true
-    },
-    speed: {
-        type: String,
-        required: true
-    },
+    }
 }, { timestamps: true });
 
-const detail = mongoose.model('Individual_details', detailSchema);
-module.exports = detail;
+const Trips = mongoose.model('trip', detailSchema);
+module.exports = Trips;
