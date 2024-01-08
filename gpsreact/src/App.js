@@ -92,7 +92,7 @@ const App = ({ markers }) => {
       setCurrentPositionIndex((prevIndex) => prevIndex + 1);
     }, 50);
 
-    return () => clearInterval(intervalId); // Cleanup on component unmount or state change
+    return () => clearInterval(intervalId); 
   });
 
   // useEffect(() => {
