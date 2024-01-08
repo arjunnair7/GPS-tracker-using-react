@@ -22,7 +22,7 @@ mongoose.connect(dbURI)
       res.json(allData)
     } catch(error){ 
       
-      console.error('Error fetching all data:', error);
+      console.error('Error fetching all ', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   })
