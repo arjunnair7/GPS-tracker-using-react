@@ -9,6 +9,7 @@ const App = ({ markers, time }) => {
   const [movingMarkerPositions, setMovingMarkerPositions] = useState([]);
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
   const [timer, setTimer] = useState(time.value);
+  const [timeOfVehicles,setTimeOfVehicles] = useState([])
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_API_KEY,
@@ -27,7 +28,7 @@ const App = ({ markers, time }) => {
     const directionsService = new google.maps.DirectionsService();
 
     markers.forEach((route, index) => {
-      changeDirection(route.start, route.finish, index);
+      changeDirection(route.start, route.finish, index,route.time);
     });
 
     // Start the timer to change the time every 15 seconds
@@ -39,7 +40,7 @@ const App = ({ markers, time }) => {
     return () => clearInterval(intervalId);
   };
 
-  const changeDirection = (origin, destination, index) => {
+  const changeDirection = (origin, destination, index,time) => {
     const directionsService = new google.maps.DirectionsService();
 
     directionsService.route(
@@ -50,6 +51,8 @@ const App = ({ markers, time }) => {
       },
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
+          setTimeOfVehicles((prevTimeOfVehicles)=>[...prevTimeOfVehicles,time])
+          
           setDirections((prevDirections) => [...prevDirections, result]);
           animateMovingMarker(result.routes[0].overview_path, index);
         } else {
@@ -58,6 +61,7 @@ const App = ({ markers, time }) => {
       }
     );
   };
+  
 
   const animateMovingMarker = (path, index) => {
     let positions = [];
