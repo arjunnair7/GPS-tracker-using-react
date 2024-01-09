@@ -1,0 +1,14 @@
+.container {
+    position: absolute;
+    top: 10vw;
+    right: 3vw;
+    width: 15vw;
+    border-radius: 4vw;
+    background-color: black;
+    color: whitesmoke;
+    padding: 2.5vw;
+    font-size: 1.2vw;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    z-index: 1000;
+    box-shadow: 0 2vw 1vw rgba(0, 0, 0, 0.2); /* Box shadow with a subtle effect */
+}

@@ -1,15 +1,14 @@
 /* global google */
 import { GoogleMap, useLoadScript, DirectionsRenderer, Marker } from "@react-google-maps/api";
-import { useState, useEffect,React,Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
 import "./App.css";
-import InfoBox from "./InfoBox";
+import TimeBox from "./TimeBox";
 
-const App = ({ markers }) => {
-  const [showInfoBox, setShowInfoBox] = useState(true);
+const App = ({ markers, time }) => {
   const [directions, setDirections] = useState([]);
   const [movingMarkerPositions, setMovingMarkerPositions] = useState([]);
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
-  let directionsService;
+  const [timer, setTimer] = useState(time.value);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_API_KEY,
@@ -24,31 +23,25 @@ const App = ({ markers }) => {
     scale: 1,
   };
 
-  let bounds;
-
   const onMapLoad = (map) => {
-    console.log(markers);
-    bounds = new google.maps.LatLngBounds();
-
-    markers.forEach((route) => {
-      const startLatLng = new google.maps.LatLng(route.start.lat, route.start.lng);
-      // const finishLatLng = new google.maps.LatLng(route.finish.lat, route.finish.lng);
-
-      bounds.extend(startLatLng);
-      
-    });
-
-    console.log("Bounds:", bounds.toJSON());
-
-    map.fitBounds(bounds);
-    directionsService = new google.maps.DirectionsService();
+    const directionsService = new google.maps.DirectionsService();
 
     markers.forEach((route, index) => {
       changeDirection(route.start, route.finish, index);
     });
+
+    // Start the timer to change the time every 15 seconds
+    const intervalId = setInterval(() => {
+      setTimer((prevTimer) => (prevTimer >= 23 ? 0 : prevTimer + 0.5));
+    }, 15000);
+   
+
+    return () => clearInterval(intervalId);
   };
 
   const changeDirection = (origin, destination, index) => {
+    const directionsService = new google.maps.DirectionsService();
+
     directionsService.route(
       {
         origin: origin,
@@ -85,37 +78,20 @@ const App = ({ markers }) => {
       } else {
         clearInterval(intervalId);
       }
-    }, 1); // Update every second, adjust timing as needed
+    }, timer * 1000); // Update every `timer` seconds, adjust timing as needed
   };
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentPositionIndex((prevIndex) => prevIndex + 1);
     }, 50);
 
-    return () => clearInterval(intervalId); 
-  });
-
-  // useEffect(() => {
-  //   setShowInfoBox(true);
-  //   console.log(directions);
-  //   // Additional logic can go here
-  //   fetch('http://localhost:3001', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify(directions), // Convert directions to a JSON string
-  //   })
-  //     .then(response => response.json())
-  //     .then(data => console.log(data))
-  //     .catch(error => console.error('Error creating documents:', error));
-  // }, [directions]);
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
     <div className="App">
-      {directions.length > 0 && showInfoBox && (
-        <InfoBox object={directions[directions.length - 1].routes[0].legs[0]} />
-      )}
+      {directions.length > 0 && <TimeBox time={{ value: timer }} />}
 
       {!isLoaded ? (
         <h1>Loading...</h1>
@@ -125,11 +101,7 @@ const App = ({ markers }) => {
             <Fragment key={index}>
               <DirectionsRenderer directions={direction} />
               {movingMarkerPositions[index] && (
-                <Marker
-                  position={movingMarkerPositions[index][currentPositionIndex]} // Initial position
-                  icon={customMarker}
-                  // animation={google.maps.Animation.BOUNCE} 
-                />
+                <Marker position={movingMarkerPositions[index][currentPositionIndex]} icon={customMarker} />
               )}
             </Fragment>
           ))}

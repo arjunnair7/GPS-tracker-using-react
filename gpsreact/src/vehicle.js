@@ -25,13 +25,15 @@ const Vehicle = () => {
     fetchData();
   }, []); // Empty dependency array to run the effect only once on component mount
 
+  var time = 0;
+
   return (
     <div>
       {loading ? (
         <p>Loading...</p>
       ) : (
         // Pass the fetched markers to the App component
-        <App markers={markers} />
+        <App markers={markers} time={{value:time}} />
       )}
     </div>
   );
