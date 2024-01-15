@@ -8,9 +8,7 @@ const App = ({ markers, time }) => {
   const [directions, setDirections] = useState([]);
   const [movingMarkerPositions, setMovingMarkerPositions] = useState([]);
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
-  const [timer, setTimer] = useState(time.value);
-  const [timeOfVehicles,setTimeOfVehicles] = useState([])
-
+  const [timer, setTimer] = useState(time ? time.value : 0);
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_API_KEY,
   });
@@ -24,23 +22,22 @@ const App = ({ markers, time }) => {
     scale: 1,
   };
 
-  const onMapLoad = (map) => {
-    const directionsService = new google.maps.DirectionsService();
+  useEffect(() => {
+    if (isLoaded && markers && markers.length > 0) {
+      markers.forEach((route, index) => {
+        changeDirection(route.start, route.finish, index, route.time);
+      });
 
-    markers.forEach((route, index) => {
-      changeDirection(route.start, route.finish, index,route.time);
-    });
+      // Start the timer to change the time every 15 seconds
+      const intervalId = setInterval(() => {
+        setTimer((prevTimer) => (prevTimer >= 23 ? 0 : prevTimer + 1));
+      }, 2000);
 
-    // Start the timer to change the time every 15 seconds
-    const intervalId = setInterval(() => {
-      setTimer((prevTimer) => (prevTimer >= 23 ? 0 : prevTimer + 0.5));
-    }, 15000);
-   
+      return () => clearInterval(intervalId);
+    }
+  }, [isLoaded, markers]);
 
-    return () => clearInterval(intervalId);
-  };
-
-  const changeDirection = (origin, destination, index,time) => {
+  const changeDirection = (origin, destination, index, time) => {
     const directionsService = new google.maps.DirectionsService();
 
     directionsService.route(
@@ -51,17 +48,16 @@ const App = ({ markers, time }) => {
       },
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
-          setTimeOfVehicles((prevTimeOfVehicles)=>[...prevTimeOfVehicles,time])
           
           setDirections((prevDirections) => [...prevDirections, result]);
           animateMovingMarker(result.routes[0].overview_path, index);
+          
         } else {
           console.error(`Error fetching directions: ${status}`);
         }
       }
     );
   };
-  
 
   const animateMovingMarker = (path, index) => {
     let positions = [];
@@ -82,16 +78,21 @@ const App = ({ markers, time }) => {
       } else {
         clearInterval(intervalId);
       }
-    }, timer * 1000); // Update every `timer` seconds, adjust timing as needed
+    }, 1); // Update every 1 second, adjust timing as needed
   };
 
-  useEffect(() => {
+  const onMarkerLoad = (index) => {
+    setCurrentPositionIndex(0);
+    console.log(movingMarkerPositions);
+
     const intervalId = setInterval(() => {
-      setCurrentPositionIndex((prevIndex) => prevIndex + 1);
-    }, 50);
+      setCurrentPositionIndex((prevPositionIndex) =>
+        prevPositionIndex >= movingMarkerPositions.length - 1 ? 0 : prevPositionIndex + 1
+      );
+    }, 100);
 
     return () => clearInterval(intervalId);
-  }, []);
+  };
 
   return (
     <div className="App">
@@ -100,15 +101,23 @@ const App = ({ markers, time }) => {
       {!isLoaded ? (
         <h1>Loading...</h1>
       ) : (
-        <GoogleMap mapContainerClassName="map-container" onLoad={onMapLoad} zoom={10}>
-          {directions.map((direction, index) => (
-            <Fragment key={index}>
-              <DirectionsRenderer directions={direction} />
-              {movingMarkerPositions[index] && (
-                <Marker position={movingMarkerPositions[index][currentPositionIndex]} icon={customMarker} />
-              )}
-            </Fragment>
-          ))}
+        <GoogleMap mapContainerClassName="map-container" zoom={10}>
+          {movingMarkerPositions.length == markers.length &&
+            directions.map((direction, index) => (
+              markers[index] && markers[index].time === timer && (
+                <Fragment key={index}>
+                  <DirectionsRenderer directions={direction} />
+                  {movingMarkerPositions[index] && (
+                    <Marker
+                      key={`marker-${index}`}
+                      onLoad={() => onMarkerLoad(index)}
+                      position={movingMarkerPositions[index][0]}
+                      icon={customMarker}
+                    />
+                  )}
+                </Fragment>
+              )
+            ))}
         </GoogleMap>
       )}
     </div>
