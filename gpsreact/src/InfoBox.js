@@ -12,23 +12,17 @@ const InfoBox = ({ object }) => {
   }
 
   // Assuming object has the necessary properties for display
-  const { distance, duration, start_address, end_address } = object;
-
-  // Function to get the text before the second comma
-  const getTextBeforeSecondComma = (address) => {
-    const parts = address.split(",");
-    return parts.slice(0, 2).join(",");
-  };
+  const { start, finish, time } = object;
 
   return (
     <div className="info-box">
       <div className="container-address">
-        <div className="start">Start: {getTextBeforeSecondComma(start_address)}</div>
-        <div className="end">Destination: {getTextBeforeSecondComma(end_address)}</div>
+        <div className="start">Start: {start.address}</div>
+        <div className="end">Destination: {finish.address}</div>
       </div>
       <div className="container-details">
-        <div className="det">Time: {duration.text}</div>
-        <div className="det">Distance: {distance.text}</div>
+        <div className="det">Time: {time}</div>
+        {/* You may add other properties here */}
       </div>
     </div>
   );

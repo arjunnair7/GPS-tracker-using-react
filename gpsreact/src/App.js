@@ -1,15 +1,18 @@
 /* global google */
 import { GoogleMap, useLoadScript, DirectionsRenderer, Marker } from "@react-google-maps/api";
+
 import { useState, useEffect, Fragment } from "react";
 import "./App.css";
 import TimeBox from "./TimeBox";
+import InfoBox from "./InfoBox";
 
 const App = ({ markers, time }) => {
   const [directions, setDirections] = useState([]);
   const [movingMarkerPositions, setMovingMarkerPositions] = useState([]);
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
   const [timer, setTimer] = useState(time ? time.value : 0);
-  const [pathLength,setPathLength] = useState([])
+  const [pathLength, setPathLength] = useState([]);
+  const [selectedMarker, setSelectedMarker] = useState(null);
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_API_KEY,
   });
@@ -28,8 +31,7 @@ const App = ({ markers, time }) => {
       markers.forEach((route, index) => {
         changeDirection(route.start, route.finish, index, route.time);
       });
-      console.log(pathLength);
-      console.log(movingMarkerPositions);
+
       // Start the timer to change the time every 15 seconds
       const intervalId = setInterval(() => {
         setTimer((prevTimer) => (prevTimer >= 23 ? 0 : prevTimer + 1));
@@ -50,13 +52,10 @@ const App = ({ markers, time }) => {
       },
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
-          
-          // console.log(result);
-          // console.log(result);
-          pathLength[index]=result.routes[0].overview_path.length 
-          directions[index] =result;
+          pathLength[index] = result.routes[0].overview_path.length;
+          directions[index] = result;
           animateMovingMarker(result.routes[0].overview_path, index);
-          
+          // console.log(directions);
         } else {
           console.error(`Error fetching directions: ${status}`);
         }
@@ -83,53 +82,52 @@ const App = ({ markers, time }) => {
       } else {
         clearInterval(intervalId);
       }
-    }, 1); // Update every 1 second, adjust timing as needed
+    }, 1); // Update every 1 millisecond, adjust timing as needed
   };
 
   const onMarkerLoad = (index) => {
+    // console.log(selectedMarker);
     setCurrentPositionIndex(0);
-    console.log(movingMarkerPositions[index].length);
-  
+
     const iterate = (iteration) => {
       if (iteration < movingMarkerPositions[index].length) {
         setCurrentPositionIndex(iteration);
-        setTimeout(() => iterate(iteration + 1), 30); // 10 milliseconds delay
+        setTimeout(() => iterate(iteration + 1), 30); // 30 milliseconds delay
       }
     };
-  
+
     iterate(0);
-  
-    // Rest of your code...
   };
-  
-  
 
   return (
     <div className="App">
       {directions.length > 0 && <TimeBox time={{ value: timer }} />}
 
+      {selectedMarker !== null && (
+        <InfoBox key={selectedMarker} object={markers[selectedMarker]}/>
+      )}
+
       {!isLoaded ? (
         <h1>Loading...</h1>
       ) : (
         <GoogleMap mapContainerClassName="map-container" zoom={10}>
-          {
-            directions.map((direction, index) => (movingMarkerPositions[index] &&
-              movingMarkerPositions[index].length == pathLength[index] &&
-              markers[index] && markers[index].time === timer && (
-                <Fragment key={index}>
-                  <DirectionsRenderer directions={direction} />
-                  {(
-                    <Marker
-
-                      key={`marker-${index}`}
-                      onLoad={() => onMarkerLoad(index)}
-                      position={movingMarkerPositions[index][currentPositionIndex]}
-                      icon={customMarker}
-                    />
-                  )}
-                </Fragment>
-              )
-            ))}
+          {directions.map((direction, index) => (
+            movingMarkerPositions[index] &&
+            movingMarkerPositions[index].length === pathLength[index] &&
+            markers[index] && markers[index].time === timer && (
+              <Fragment key={index}>
+                <DirectionsRenderer directions={direction} />
+                <Marker
+                  onClick={() => setSelectedMarker(index)}
+                  key={`marker-${index}`}
+                  onLoad={() => onMarkerLoad(index)}
+                  position={movingMarkerPositions[index][currentPositionIndex]}
+                  icon={customMarker}
+                  onUnmount={()=>setSelectedMarker(null)}
+                />
+              </Fragment>
+            )
+          ))}
         </GoogleMap>
       )}
     </div>
