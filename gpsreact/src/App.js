@@ -9,6 +9,7 @@ const App = ({ markers, time }) => {
   const [movingMarkerPositions, setMovingMarkerPositions] = useState([]);
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
   const [timer, setTimer] = useState(time ? time.value : 0);
+  const [pathLength,setPathLength] = useState([])
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_API_KEY,
   });
@@ -27,11 +28,12 @@ const App = ({ markers, time }) => {
       markers.forEach((route, index) => {
         changeDirection(route.start, route.finish, index, route.time);
       });
-
+      console.log(pathLength);
+      console.log(movingMarkerPositions);
       // Start the timer to change the time every 15 seconds
       const intervalId = setInterval(() => {
         setTimer((prevTimer) => (prevTimer >= 23 ? 0 : prevTimer + 1));
-      }, 2000);
+      }, 15000);
 
       return () => clearInterval(intervalId);
     }
@@ -49,7 +51,10 @@ const App = ({ markers, time }) => {
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
           
-          setDirections((prevDirections) => [...prevDirections, result]);
+          // console.log(result);
+          // console.log(result);
+          pathLength[index]=result.routes[0].overview_path.length 
+          directions[index] =result;
           animateMovingMarker(result.routes[0].overview_path, index);
           
         } else {
@@ -83,16 +88,21 @@ const App = ({ markers, time }) => {
 
   const onMarkerLoad = (index) => {
     setCurrentPositionIndex(0);
-    console.log(movingMarkerPositions);
-
-    const intervalId = setInterval(() => {
-      setCurrentPositionIndex((prevPositionIndex) =>
-        prevPositionIndex >= movingMarkerPositions.length - 1 ? 0 : prevPositionIndex + 1
-      );
-    }, 100);
-
-    return () => clearInterval(intervalId);
+    console.log(movingMarkerPositions[index].length);
+  
+    const iterate = (iteration) => {
+      if (iteration < movingMarkerPositions[index].length) {
+        setCurrentPositionIndex(iteration);
+        setTimeout(() => iterate(iteration + 1), 30); // 10 milliseconds delay
+      }
+    };
+  
+    iterate(0);
+  
+    // Rest of your code...
   };
+  
+  
 
   return (
     <div className="App">
@@ -102,16 +112,18 @@ const App = ({ markers, time }) => {
         <h1>Loading...</h1>
       ) : (
         <GoogleMap mapContainerClassName="map-container" zoom={10}>
-          {movingMarkerPositions.length == markers.length &&
-            directions.map((direction, index) => (
+          {
+            directions.map((direction, index) => (movingMarkerPositions[index] &&
+              movingMarkerPositions[index].length == pathLength[index] &&
               markers[index] && markers[index].time === timer && (
                 <Fragment key={index}>
                   <DirectionsRenderer directions={direction} />
-                  {movingMarkerPositions[index] && (
+                  {(
                     <Marker
+
                       key={`marker-${index}`}
                       onLoad={() => onMarkerLoad(index)}
-                      position={movingMarkerPositions[index][0]}
+                      position={movingMarkerPositions[index][currentPositionIndex]}
                       icon={customMarker}
                     />
                   )}

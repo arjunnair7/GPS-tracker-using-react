@@ -25,7 +25,7 @@ const Vehicle = () => {
     fetchData();
   }, []); // Empty dependency array to run the effect only once on component mount
 
-  var time = 5;
+  var time = 0;
 
   return (
     <div>
