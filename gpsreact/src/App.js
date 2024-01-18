@@ -116,7 +116,8 @@ const App = ({ markers, time }) => {
             movingMarkerPositions[index].length === pathLength[index] &&
             markers[index] && markers[index].time === timer && (
               <Fragment key={index}>
-                <DirectionsRenderer directions={direction} />
+                { markers[index].time === timer  && 
+                <DirectionsRenderer directions={direction} />}
                 <Marker
                   onClick={() => setSelectedMarker(index)}
                   key={`marker-${index}`}
@@ -125,6 +126,7 @@ const App = ({ markers, time }) => {
                   icon={customMarker}
                   onUnmount={()=>setSelectedMarker(null)}
                 />
+                
               </Fragment>
             )
           ))}

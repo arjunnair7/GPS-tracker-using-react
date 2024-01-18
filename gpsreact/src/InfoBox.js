@@ -17,8 +17,8 @@ const InfoBox = ({ object }) => {
   return (
     <div className="info-box">
       <div className="container-address">
-        <div className="start">Start: {start.address}</div>
-        <div className="end">Destination: {finish.address}</div>
+        <div className="start">Start: {`${start.lat}, ${start.lng}`}</div>
+        <div className="end">Destination: {`${finish.lat}, ${finish.lng}`}</div>
       </div>
       <div className="container-details">
         <div className="det">Time: {time}</div>
