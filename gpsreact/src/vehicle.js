@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import App from "./App";
-
+import "./vehicle.css"
+import TopNav from "./TopNav";
+import { BrowserRouter } from "react-router-dom";
 const Vehicle = () => {
   // State to store markers data
   const [markers, setMarkers] = useState([]);
@@ -29,12 +31,17 @@ const Vehicle = () => {
 
   return (
     <div>
+      <BrowserRouter>
+      <TopNav/>
+      <div className="map-box">
       {loading ? (
         <p>Loading...</p>
       ) : (
         // Pass the fetched markers to the App component
         <App markers={markers} time={{value:time}} />
       )}
+    </div>
+    </BrowserRouter>
     </div>
   );
 };
