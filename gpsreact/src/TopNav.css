@@ -1,7 +1,7 @@
 .top__nav {
     background-color: blue;
     position: fixed;
-    top: 0;
+    top: 0.5rem;
     left: 16rem;
     z-index: 999;
     background: var(--primary-color);

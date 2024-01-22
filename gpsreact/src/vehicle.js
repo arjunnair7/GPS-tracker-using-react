@@ -3,6 +3,7 @@ import App from "./App";
 import "./vehicle.css"
 import TopNav from "./TopNav";
 import { BrowserRouter } from "react-router-dom";
+import Sidebar from "./SideBar";
 const Vehicle = () => {
   // State to store markers data
   const [markers, setMarkers] = useState([]);
@@ -33,6 +34,8 @@ const Vehicle = () => {
     <div>
       <BrowserRouter>
       <TopNav/>
+      <div>
+        <div><Sidebar/></div>
       <div className="map-box">
       {loading ? (
         <p>Loading...</p>
@@ -40,6 +43,7 @@ const Vehicle = () => {
         // Pass the fetched markers to the App component
         <App markers={markers} time={{value:time}} />
       )}
+    </div>
     </div>
     </BrowserRouter>
     </div>

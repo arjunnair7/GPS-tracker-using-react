@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Link } from "react-router-dom";
-import profileImg from "./Hero-Logo1.jpg";
+import profileImg from "./user_pic.png";
 import "./TopNav.css";
 
 const TopNav = () => {
