@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' })); // Increase payload size limit
 
-const dbURI = "mongodb://localhost:27017/Travel";
+const dbURI = "mongodb://127.0.0.1:27017/Travel";
 
 mongoose.connect(dbURI)
   .then(result => app.listen(3001))
@@ -17,7 +17,7 @@ mongoose.connect(dbURI)
 
   app.get("/",async(req,res)=>{
     try{
-      const allData = await Trips.find().limit(10)
+      const allData = await Trips.find().limit(100)
       console.log(allData);
       res.json(allData)
     } catch(error){ 
